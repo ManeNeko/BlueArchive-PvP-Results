@@ -49,25 +49,17 @@
             max-height: calc(100vh - 200px);
             overflow-y: auto;
         }
-        /* 数値入力フィールドのスタイル */
-        input[type=number]::-webkit-inner-spin-button,
-        input[type=number]::-webkit-outer-spin-button {
-          -webkit-appearance: none;
-          margin: 0;
-        }
         input[type=number] {
           -moz-appearance: textfield;
           appearance: textfield;
           width: 100%;
           text-align: center;
         }
-        /* グリッドスタイル */
         .coord-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
             gap: 8px;
         }
-        /* 調整ボタン */
         .adjust-btn {
             padding: 2px 8px;
             background-color: #f3f4f6;
@@ -78,13 +70,8 @@
             user-select: none;
             font-size: 14px;
         }
-        .adjust-btn:hover {
-            background-color: #e5e7eb;
-        }
-        .adjust-btn:active {
-            background-color: #d1d5db;
-        }
-        /* 入力グループ */
+        .adjust-btn:hover { background-color: #e5e7eb; }
+        .adjust-btn:active { background-color: #d1d5db; }
         .input-group {
             position: relative;
             width: 100%;
@@ -97,21 +84,33 @@
             padding: 0 4px;
             font-size: 10px;
             color: #6b7280;
-            z-index: 1;
+        }
+        .control-panel {
+             border: 1px solid #d1d5db;
+             background-color: white;
+             border-radius: 0.375rem;
+             padding: 0.75rem;
+             margin-bottom: 1rem;
+             box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+        }
+        .control-panel-title {
+             font-size: 0.875rem;
+             font-weight: 600;
+             color: #374151;
+             padding-bottom: 0.5rem;
+             border-bottom: 1px solid #e5e7eb;
+             margin-bottom: 0.75rem;
         }
     </style>
 </head>
 <body class="bg-gray-100 p-4 md:p-8">
 
     <div class="container mx-auto bg-white p-6 rounded-lg shadow-lg">
-
         <div class="mb-6">
             <label for="image-upload" class="block text-sm font-medium text-gray-700 mb-2">画像ファイルを選択してください:</label>
             <input type="file" id="image-upload" accept="image/*" class="block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
         </div>
-
         <div class="flex flex-col md:flex-row gap-6">
-
             <div class="flex-grow md:w-2/3 relative">
                 <div id="image-container" class="w-full">
                     <img id="uploaded-image" src="#" alt="アップロードされた画像" class="hidden">
@@ -119,15 +118,12 @@
                     <span id="image-placeholder" class="text-gray-500">ここに画像が表示されます</span>
                 </div>
             </div>
-
             <div class="md:w-1/3 bg-gray-50 p-4 rounded-lg border border-gray-200 flex flex-col">
-
                 <div class="mb-4">
                     <button id="download-button" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed w-full focus:outline-none focus:ring-2 focus:ring-blue-300" disabled>
                         座標ファイルをダウンロード
                     </button>
                 </div>
-
                 <div id="controls-container" class="space-y-4 flex-grow">
                     <p id="controls-placeholder" class="text-sm text-gray-500">画像をアップロードすると、ここに座標設定が表示されます。</p>
                 </div>
@@ -136,27 +132,22 @@
     </div>
 
     <script>
-        // --- 初期データ ---
-        let box_title = ["攻守","対戦相手","勝敗","A1","A2","A3","A4","SP1","SP2","D1","D2","D3","D4","SP3","SP4"]
+        // --- 初期データ & 定数 ---
+        const box_title = ["攻守", "対戦相手", "勝敗", "A1", "A2", "A3", "A4", "SP1", "SP2", "D1", "D2", "D3", "D4", "SP3", "SP4"];
+        const ref_directory = ["攻守", "対戦相手", "勝敗", "キャラクター", "キャラクター", "キャラクター", "キャラクター", "キャラクター", "キャラクター", "キャラクター", "キャラクター", "キャラクター", "キャラクター", "キャラクター", "キャラクター"];
+        const ref_txt = ["攻守.txt", null, "勝敗.txt", "ST.txt", "ST.txt", "ST.txt", "ST.txt", "SP.txt", "SP.txt", "ST.txt", "ST.txt", "ST.txt", "ST.txt", "SP.txt", "SP.txt"];
+        const LINKED_BOX_START_INDEX = 3;
+        const LINKED_BOX_END_INDEX = 14;
+
         let positions = [
-            [0.045, 0.260, 0.085, 0.330, "攻守.txt", "攻守"],
-            [0.818, 0.238, 0.970, 0.270, null, "対戦相手"],
-            [0.090, 0.260, 0.185, 0.330, "勝敗.txt", "勝敗"],
-            [0.085, 0.740, 0.119, 0.800, "ST.txt", "キャラクター"],
-            [0.144, 0.740, 0.178, 0.800, "ST.txt", "キャラクター"],
-            [0.203, 0.740, 0.237, 0.800, "ST.txt", "キャラクター"],
-            [0.262, 0.740, 0.296, 0.800, "ST.txt", "キャラクター"],
-            [0.321, 0.740, 0.355, 0.800, "SP.txt", "キャラクター"],
-            [0.380, 0.740, 0.414, 0.800, "SP.txt", "キャラクター"],
-            [0.584, 0.740, 0.618, 0.800, "ST.txt", "キャラクター"],
-            [0.642, 0.740, 0.676, 0.800, "ST.txt", "キャラクター"],
-            [0.700, 0.740, 0.734, 0.800, "ST.txt", "キャラクター"],
-            [0.760, 0.740, 0.794, 0.800, "ST.txt", "キャラクター"],
-            [0.819, 0.740, 0.853, 0.800, "SP.txt", "キャラクター"],
-            [0.878, 0.740, 0.912, 0.800, "SP.txt", "キャラクター"]
+            [0.045, 0.260, 0.085, 0.330], [0.818, 0.238, 0.970, 0.270], [0.090, 0.260, 0.185, 0.330],
+            [0.087, 0.742, 0.118, 0.801], [0.146, 0.742, 0.177, 0.801], [0.204, 0.742, 0.235, 0.801],
+            [0.263, 0.742, 0.294, 0.801], [0.323, 0.742, 0.354, 0.801], [0.380, 0.742, 0.411, 0.801],
+            [0.585, 0.742, 0.616, 0.801], [0.642, 0.742, 0.673, 0.801], [0.701, 0.742, 0.732, 0.801],
+            [0.760, 0.742, 0.791, 0.801], [0.819, 0.742, 0.850, 0.801], [0.878, 0.742, 0.909, 0.801]
         ];
 
-        // --- DOM要素取得 ---
+        // --- DOM要素 ---
         const imageUpload = document.getElementById('image-upload');
         const uploadedImage = document.getElementById('uploaded-image');
         const imageContainer = document.getElementById('image-container');
@@ -170,33 +161,29 @@
         let imageWidth = 0, imageHeight = 0, displayScale = 1;
         let isDragging = false, activeBox = null;
         let startX, startY, initialBoxX, initialBoxY;
+        let initialDragPos = [];
+        let studentBoxConfig = { top: 0, width: 0, height: 0 };
 
         // --- イベントリスナー ---
         imageUpload.addEventListener('change', (event) => {
             const file = event.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    uploadedImage.src = e.target.result;
-                    uploadedImage.classList.remove('hidden');
-                    imagePlaceholder.classList.add('hidden');
-                    uploadedImage.onload = () => {
-                        imageWidth = uploadedImage.naturalWidth;
-                        imageHeight = uploadedImage.naturalHeight;
-                        displayScale = uploadedImage.offsetWidth / imageWidth;
-                        initializeBoxesAndControls();
-                        downloadButton.disabled = false;
-                        controlsPlaceholder.classList.add('hidden');
-                    };
-                    uploadedImage.onerror = () => {
-                        alert("画像の読み込みに失敗しました。");
-                        resetUI();
-                    };
-                }
-                reader.readAsDataURL(file);
-            } else {
-                resetUI();
+            if (!file) { resetUI(); return; }
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                uploadedImage.src = e.target.result;
+                uploadedImage.classList.remove('hidden');
+                imagePlaceholder.classList.add('hidden');
+                uploadedImage.onload = () => {
+                    imageWidth = uploadedImage.naturalWidth;
+                    imageHeight = uploadedImage.naturalHeight;
+                    displayScale = uploadedImage.offsetWidth / imageWidth;
+                    initializeUI();
+                    downloadButton.disabled = false;
+                    controlsPlaceholder.classList.add('hidden');
+                };
+                uploadedImage.onerror = () => { alert("画像の読み込みに失敗しました。"); resetUI(); };
             }
+            reader.readAsDataURL(file);
         });
 
         window.addEventListener('resize', () => {
@@ -207,23 +194,18 @@
         });
 
         downloadButton.addEventListener('click', () => {
-            let outputString = "# --- 設定 ---\n# トリミング用の座標配列 [左, 上, 右, 下, 選択肢ファイル名 or None, 保存フォルダ名]\n# 注意: 相対座標 (0.0 から 1.0)\npositions = [\n";
+            let outputString = "# --- 設定 ---\n";
+            outputString += "# トリミング用の座標配列 [左, 上, 右, 下, 選択肢ファイル名 or None, 保存フォルダ名]\n";
+            outputString += "# 注意: 相対座標 (0.0 から 1.0)\n";
+            outputString += "positions = [\n";
             positions.forEach((pos, index) => {
-                const left = parseFloat(pos[0]).toFixed(3);
-                const top = parseFloat(pos[1]).toFixed(3);
-                const right = parseFloat(pos[2]).toFixed(3);
-                const bottom = parseFloat(pos[3]).toFixed(3);
-                const file = pos[4] === null ? 'None' : `"${pos[4]}"`;
-                const folder = `"${pos[5]}"`;
-                outputString += `    [${left}, ${top}, ${right}, ${bottom}, ${file}, ${folder}]`;
-                if (index < positions.length - 1) {
-                    outputString += ",\n";
-                } else {
-                    outputString += "\n";
-                }
+                const coords = pos.map(c => parseFloat(c).toFixed(3)).join(', ');
+                const txt = ref_txt[index] === null ? 'None' : `"${ref_txt[index]}"`;
+                const dir = `"${ref_directory[index]}"`;
+                outputString += `    [${coords}, ${txt}, ${dir}]` + (index < positions.length - 1 ? ",\n" : "\n");
             });
             outputString += "]\n";
-            const blob = new Blob([outputString], { type: 'text/plain' });
+            const blob = new Blob([outputString], { type: 'text/plain;charset=utf-8' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
@@ -234,7 +216,7 @@
             URL.revokeObjectURL(url);
         });
 
-        // --- 関数 ---
+        // --- UI初期化・更新 ---
         function resetUI() {
             uploadedImage.src = "#";
             uploadedImage.classList.add('hidden');
@@ -247,222 +229,232 @@
             imageWidth = 0; imageHeight = 0; displayScale = 1;
         }
 
-        // 改善されたボックスとコントロールの初期化
-        function initializeBoxesAndControls() {
+        function initializeUI() {
+            // 生徒ボックスの共通設定を初期化
+            const firstStudentBox = positions[LINKED_BOX_START_INDEX];
+            studentBoxConfig = {
+                top: firstStudentBox[1],
+                width: firstStudentBox[2] - firstStudentBox[0],
+                height: firstStudentBox[3] - firstStudentBox[1]
+            };
+            
             boxOverlay.innerHTML = '';
             controlsContainer.innerHTML = '';
+            createStudentBoxControls();
+            createIndividualBoxControls();
+            updateAllBoxesStyle();
+        }
 
+        function createStudentBoxControls() {
+            const panel = document.createElement('div');
+            panel.className = 'control-panel';
+            panel.innerHTML = `<h3 class="control-panel-title">生徒ボックス共通設定</h3>`;
+            const grid = document.createElement('div');
+            grid.className = 'grid grid-cols-3 gap-2';
+
+            const configs = [
+                { id: 'student-top', label: '上座標', key: 'top' },
+                { id: 'student-width', label: '横幅', key: 'width' },
+                { id: 'student-height', label: '縦幅', key: 'height' }
+            ];
+
+            configs.forEach(conf => {
+                const value = studentBoxConfig[conf.key];
+                const inputGroup = createInputGroup(conf.id, conf.label, value, handleStudentBoxChange);
+                grid.appendChild(inputGroup);
+            });
+            panel.appendChild(grid);
+            controlsContainer.appendChild(panel);
+        }
+
+        function createIndividualBoxControls() {
             positions.forEach((pos, index) => {
-                // ボックス作成
+                const isLinked = index >= LINKED_BOX_START_INDEX && index <= LINKED_BOX_END_INDEX;
+                const panel = document.createElement('div');
+                panel.className = 'control-panel';
+
+                const titleBar = document.createElement('div');
+                titleBar.className = 'flex items-center justify-between mb-3 pb-2 border-b border-gray-200';
+                titleBar.innerHTML = `<h3 class="text-sm font-semibold text-gray-700">${box_title[index]}</h3><span class="px-2 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded-full">#${index + 1}</span>`;
+                panel.appendChild(titleBar);
+
+                const grid = document.createElement('div');
+                grid.className = isLinked ? '' : 'coord-grid';
+
+                if (isLinked) {
+                    const inputGroup = createInputGroup(`left-${index}`, '左の始点座標', pos[0], handleInputChange, index, 0);
+                    grid.appendChild(inputGroup);
+                } else {
+                    const labels = [{ id: 'left', label: '左' }, { id: 'top', label: '上' }, { id: 'right', label: '右' }, { id: 'bottom', label: '下' }];
+                    labels.forEach((label, coordIndex) => {
+                        const inputGroup = createInputGroup(`${label.id}-${index}`, label.label, pos[coordIndex], handleInputChange, index, coordIndex);
+                        grid.appendChild(inputGroup);
+                    });
+                }
+                panel.appendChild(grid);
+                controlsContainer.appendChild(panel);
+            });
+            updateAllBoxesStyle();
+        }
+        
+        function createInputGroup(id, label, value, changeHandler, dataIndex, dataCoord) {
+            const inputGroup = document.createElement('div');
+            inputGroup.className = 'input-group p-2 border border-gray-200 rounded-md bg-white';
+            const labelElem = document.createElement('div');
+            labelElem.className = 'input-label';
+            labelElem.textContent = label;
+            const controlGroup = document.createElement('div');
+controlGroup.className = 'flex items-center gap-1';
+            const inputElem = document.createElement('input');
+            inputElem.type = 'number';
+            inputElem.id = id;
+            inputElem.value = parseFloat(value).toFixed(3);
+            inputElem.step = '0.001';
+            inputElem.min = '0';
+            inputElem.max = '1';
+            inputElem.className = 'border-0 focus:ring-0 w-full p-0';
+            inputElem.addEventListener('change', changeHandler);
+            if(dataIndex !== undefined) inputElem.dataset.index = dataIndex;
+            if(dataCoord !== undefined) inputElem.dataset.coord = dataCoord;
+            
+            const btnGroup = document.createElement('div');
+            btnGroup.className = 'flex space-x-1';
+            ['-', '+'].forEach(sign => {
+                const btn = document.createElement('button');
+                btn.className = 'adjust-btn';
+                btn.textContent = sign;
+                btn.dataset.inputId = id;
+                btn.dataset.step = (sign === '-' ? -0.001 : 0.001);
+                btn.addEventListener('click', handleAdjustButtonClick);
+                btnGroup.appendChild(btn);
+            });
+
+            controlGroup.appendChild(inputElem);
+            controlGroup.appendChild(btnGroup);
+            inputGroup.appendChild(labelElem);
+            inputGroup.appendChild(controlGroup);
+            return inputGroup;
+        }
+
+        function updateAllBoxesStyle() {
+            if (!boxOverlay) return;
+            boxOverlay.innerHTML = '';
+            positions.forEach((pos, index) => {
                 const box = document.createElement('div');
-                box.classList.add('coord-box');
+                box.className = 'coord-box';
                 box.dataset.index = index;
+                box.addEventListener('mousedown', startDrag);
                 updateBoxStyle(box, pos);
                 boxOverlay.appendChild(box);
-                box.addEventListener('mousedown', startDrag);
-
-                // コントロールパネル作成 - アニメーションなし
-                const controlPanel = document.createElement('div');
-                controlPanel.classList.add('p-3', 'border', 'border-gray-300', 'rounded-md', 'bg-white', 'shadow-sm', 'mb-4');
-
-                // タイトルバー
-                const titleBar = document.createElement('div');
-                titleBar.classList.add('flex', 'items-center', 'justify-between', 'mb-3', 'pb-2', 'border-b', 'border-gray-200');
-                
-                const title = document.createElement('h3');
-                title.classList.add('text-sm', 'font-semibold', 'text-gray-700');
-                title.textContent = box_title[index];
-                
-                // バッジ (インデックス表示)
-                const badge = document.createElement('span');
-                badge.classList.add('px-2', 'py-1', 'bg-blue-100', 'text-blue-800', 'text-xs', 'font-medium', 'rounded-full');
-                badge.textContent = `#${index + 1}`;
-                
-                titleBar.appendChild(title);
-                titleBar.appendChild(badge);
-                controlPanel.appendChild(titleBar);
-
-                // 座標入力グリッド
-                const coordGrid = document.createElement('div');
-                coordGrid.classList.add('coord-grid');
-
-                const coordLabels = [
-                    { id: 'left', label: '左' },
-                    { id: 'top', label: '上' },
-                    { id: 'right', label: '右' },
-                    { id: 'bottom', label: '下' }
-                ];
-
-                coordLabels.forEach((coord, coordIndex) => {
-                    const inputId = `${coord.id}-${index}`;
-                    
-                    // 入力グループ
-                    const inputGroup = document.createElement('div');
-                    inputGroup.classList.add('input-group', 'p-2', 'border', 'border-gray-200', 'rounded-md');
-                    
-                    // ラベル
-                    const labelElem = document.createElement('div');
-                    labelElem.classList.add('input-label');
-                    labelElem.textContent = coord.label;
-                    
-                    // 入力コントロール
-                    const controlGroup = document.createElement('div');
-                    controlGroup.classList.add('flex', 'items-center', 'gap-2');
-                    
-                    // 入力欄
-                    const inputElem = document.createElement('input');
-                    inputElem.type = 'number';
-                    inputElem.id = inputId;
-                    inputElem.dataset.index = index;
-                    inputElem.dataset.coord = coordIndex;
-                    inputElem.value = parseFloat(pos[coordIndex]).toFixed(3);
-                    inputElem.step = '0.001';
-                    inputElem.min = '0';
-                    inputElem.max = '1';
-                    inputElem.classList.add('border', 'border-gray-300', 'rounded-md', 'p-1', 'text-sm');
-                    
-                    // ボタン
-                    const buttonGroup = document.createElement('div');
-                    buttonGroup.classList.add('flex', 'space-x-1');
-                    
-                    const decrementBtn = document.createElement('button');
-                    decrementBtn.classList.add('adjust-btn');
-                    decrementBtn.innerHTML = '-';
-                    decrementBtn.dataset.inputId = inputId;
-                    decrementBtn.dataset.step = '-0.001';
-                    
-                    const incrementBtn = document.createElement('button');
-                    incrementBtn.classList.add('adjust-btn');
-                    incrementBtn.innerHTML = '+';
-                    incrementBtn.dataset.inputId = inputId;
-                    incrementBtn.dataset.step = '0.001';
-                    
-                    buttonGroup.appendChild(decrementBtn);
-                    buttonGroup.appendChild(incrementBtn);
-                    
-                    controlGroup.appendChild(inputElem);
-                    controlGroup.appendChild(buttonGroup);
-                    
-                    inputGroup.appendChild(labelElem);
-                    inputGroup.appendChild(controlGroup);
-                    
-                    coordGrid.appendChild(inputGroup);
-                    
-                    // イベントリスナー
-                    inputElem.addEventListener('input', handleInputChange);
-                    inputElem.addEventListener('change', handleInputChange);
-                    decrementBtn.addEventListener('click', handleAdjustButtonClick);
-                    incrementBtn.addEventListener('click', handleAdjustButtonClick);
-                });
-
-                controlPanel.appendChild(coordGrid);
-                controlsContainer.appendChild(controlPanel);
             });
         }
-
-        // ボックススタイル更新
+        
         function updateBoxStyle(boxElement, positionData) {
             if (!imageWidth || !imageHeight) return;
-            const [relLeft, relTop, relRight, relBottom] = positionData.map(parseFloat);
-            const absLeft = relLeft * imageWidth * displayScale;
-            const absTop = relTop * imageHeight * displayScale;
-            const absRight = relRight * imageWidth * displayScale;
-            const absBottom = relBottom * imageHeight * displayScale;
-            const absWidth = absRight - absLeft;
-            const absHeight = absBottom - absTop;
-            boxElement.style.left = `${absLeft}px`;
-            boxElement.style.top = `${absTop}px`;
-            boxElement.style.width = `${absWidth}px`;
-            boxElement.style.height = `${absHeight}px`;
-            boxElement.style.minWidth = '4px';
-            boxElement.style.minHeight = '4px';
+            const [relLeft, relTop, relRight, relBottom] = positionData.map(p => parseFloat(p));
+            boxElement.style.left = `${relLeft * imageWidth * displayScale}px`;
+            boxElement.style.top = `${relTop * imageHeight * displayScale}px`;
+            boxElement.style.width = `${(relRight - relLeft) * imageWidth * displayScale}px`;
+            boxElement.style.height = `${(relBottom - relTop) * imageHeight * displayScale}px`;
         }
 
-        // 全ボックススタイル更新
-        function updateAllBoxesStyle() {
-            const boxes = boxOverlay.querySelectorAll('.coord-box');
-            boxes.forEach(box => {
-                const index = parseInt(box.dataset.index);
-                updateBoxStyle(box, positions[index]);
+        function syncAllLinkedBoxes() {
+            for (let i = LINKED_BOX_START_INDEX; i <= LINKED_BOX_END_INDEX; i++) {
+                positions[i][1] = studentBoxConfig.top;
+                positions[i][3] = studentBoxConfig.top + studentBoxConfig.height;
+                positions[i][2] = positions[i][0] + studentBoxConfig.width;
+            }
+            updateAllBoxesStyle();
+            updateAllControls();
+        }
+
+        function updateAllControls() {
+            document.getElementById('student-top').value = studentBoxConfig.top.toFixed(3);
+            document.getElementById('student-width').value = studentBoxConfig.width.toFixed(3);
+            document.getElementById('student-height').value = studentBoxConfig.height.toFixed(3);
+            positions.forEach((pos, index) => {
+                const isLinked = index >= LINKED_BOX_START_INDEX && index <= LINKED_BOX_END_INDEX;
+                if(isLinked){
+                    document.getElementById(`left-${index}`).value = pos[0].toFixed(3);
+                } else {
+                    document.getElementById(`left-${index}`).value = pos[0].toFixed(3);
+                    document.getElementById(`top-${index}`).value = pos[1].toFixed(3);
+                    document.getElementById(`right-${index}`).value = pos[2].toFixed(3);
+                    document.getElementById(`bottom-${index}`).value = pos[3].toFixed(3);
+                }
             });
         }
 
-        // 数値入力変更処理
+        // --- イベントハンドラ ---
+        function handleStudentBoxChange(event) {
+            const key = event.target.id.split('-')[1];
+            studentBoxConfig[key] = parseFloat(event.target.value);
+            syncAllLinkedBoxes();
+        }
+        
         function handleInputChange(event) {
             const input = event.target;
             const index = parseInt(input.dataset.index);
             const coordIndex = parseInt(input.dataset.coord);
-            let value = parseFloat(input.value);
-            if (isNaN(value)) value = positions[index][coordIndex]; // 元の値に戻す
-            value = Math.max(0, Math.min(1, value));
-            input.value = value.toFixed(3);
-            // positions 配列を更新
-            if (positions[index][coordIndex] !== value) {
-                positions[index][coordIndex] = value;
-                const box = boxOverlay.querySelector(`.coord-box[data-index="${index}"]`);
-                if (box) updateBoxStyle(box, positions[index]);
-            }
+            positions[index][coordIndex] = parseFloat(input.value);
+            syncAllLinkedBoxes();
         }
-
-        // ボタンクリック処理 - 改善版
+        
         function handleAdjustButtonClick(event) {
             const button = event.currentTarget;
-            const inputId = button.dataset.inputId;
+            const inputElement = document.getElementById(button.dataset.inputId);
             const step = parseFloat(button.dataset.step);
-            const inputElement = document.getElementById(inputId);
-
-            if (inputElement) {
-                let currentValue = parseFloat(inputElement.value);
-                if (isNaN(currentValue)) currentValue = 0;
-                let newValue = currentValue + step;
-                newValue = Math.max(0, Math.min(1, newValue)); // 0-1の範囲に制限
-                inputElement.value = newValue.toFixed(3);
-
-                // inputイベントを手動で発火
-                inputElement.dispatchEvent(new Event('input', { bubbles: true }));
-            }
+            inputElement.value = (parseFloat(inputElement.value) + step).toFixed(3);
+            inputElement.dispatchEvent(new Event('change', { bubbles: true }));
         }
 
-        // --- ドラッグ処理 ---
         function startDrag(event) {
             if (event.button !== 0) return;
-            isDragging = true; activeBox = event.target;
-            activeBox.classList.add('dragging'); activeBox.style.zIndex = 10;
+            isDragging = true;
+            activeBox = event.target;
+            const index = parseInt(activeBox.dataset.index);
+            initialDragPos = [...positions[index]];
+            activeBox.classList.add('dragging');
+            activeBox.style.zIndex = 10;
             const rect = imageContainer.getBoundingClientRect();
-            startX = event.clientX - rect.left; startY = event.clientY - rect.top;
-            initialBoxX = parseFloat(activeBox.style.left || 0); initialBoxY = parseFloat(activeBox.style.top || 0);
+            startX = event.clientX - rect.left;
+            startY = event.clientY - rect.top;
             document.addEventListener('mousemove', drag);
             document.addEventListener('mouseup', stopDrag);
             document.addEventListener('mouseleave', stopDrag);
         }
-        
+
         function drag(event) {
             if (!isDragging || !activeBox) return;
             event.preventDefault();
             const rect = imageContainer.getBoundingClientRect();
-            const currentX = event.clientX - rect.left, currentY = event.clientY - rect.top;
-            const dx = currentX - startX, dy = currentY - startY;
-            let newBoxX = initialBoxX + dx, newBoxY = initialBoxY + dy;
-            const boxWidth = parseFloat(activeBox.style.width || 0), boxHeight = parseFloat(activeBox.style.height || 0);
-            const displayWidth = imageWidth * displayScale, displayHeight = imageHeight * displayScale;
-            newBoxX = Math.max(0, Math.min(newBoxX, displayWidth - boxWidth));
-            newBoxY = Math.max(0, Math.min(newBoxY, displayHeight - boxHeight));
-            activeBox.style.left = `${newBoxX}px`; activeBox.style.top = `${newBoxY}px`;
-        }
-        
-        function stopDrag(event) {
-            if (!isDragging || !activeBox) return;
-            isDragging = false; activeBox.classList.remove('dragging'); activeBox.style.zIndex = '';
+            const dx = (event.clientX - rect.left - startX) / (imageWidth * displayScale);
+            const dy = (event.clientY - rect.top - startY) / (imageHeight * displayScale);
+
             const index = parseInt(activeBox.dataset.index);
-            const boxWidthPx = parseFloat(activeBox.style.width || 0), boxHeightPx = parseFloat(activeBox.style.height || 0);
-            const finalBoxX = parseFloat(activeBox.style.left || 0), finalBoxY = parseFloat(activeBox.style.top || 0);
-            const relLeft = finalBoxX / (imageWidth * displayScale), relTop = finalBoxY / (imageHeight * displayScale);
-            const relRight = (finalBoxX + boxWidthPx) / (imageWidth * displayScale), relBottom = (finalBoxY + boxHeightPx) / (imageHeight * displayScale);
-            positions[index][0] = parseFloat(relLeft.toFixed(3)); positions[index][1] = parseFloat(relTop.toFixed(3));
-            positions[index][2] = parseFloat(relRight.toFixed(3)); positions[index][3] = parseFloat(relBottom.toFixed(3));
-            document.getElementById(`left-${index}`).value = relLeft.toFixed(3); document.getElementById(`top-${index}`).value = relTop.toFixed(3);
-            document.getElementById(`right-${index}`).value = relRight.toFixed(3); document.getElementById(`bottom-${index}`).value = relBottom.toFixed(3);
-            document.removeEventListener('mousemove', drag); document.removeEventListener('mouseup', stopDrag); document.removeEventListener('mouseleave', stopDrag);
+            const isLinked = index >= LINKED_BOX_START_INDEX && index <= LINKED_BOX_END_INDEX;
+
+            if (isLinked) {
+                const newTop = initialDragPos[1] + dy;
+                studentBoxConfig.top = newTop;
+                positions[index][0] = initialDragPos[0] + dx;
+            } else {
+                positions[index][0] = initialDragPos[0] + dx;
+                positions[index][1] = initialDragPos[1] + dy;
+                positions[index][2] = initialDragPos[2] + dx;
+                positions[index][3] = initialDragPos[3] + dy;
+            }
+            syncAllLinkedBoxes();
+        }
+
+        function stopDrag(event) {
+            if (!isDragging) return;
+            isDragging = false;
+            activeBox.classList.remove('dragging');
+            activeBox.style.zIndex = '';
+            document.removeEventListener('mousemove', drag);
+            document.removeEventListener('mouseup', stopDrag);
+            document.removeEventListener('mouseleave', stopDrag);
             activeBox = null;
         }
     </script>
