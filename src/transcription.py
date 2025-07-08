@@ -69,9 +69,9 @@ def authenticate_google_sheets(service_account_file):
 
 
 def get_last_row(service, spreadsheet_id, worksheet_name):
-    """指定されたワークシートのA列の最終行を取得"""
+    """指定されたワークシートのB列の最終行を取得"""
     try:
-        range_name = f"{worksheet_name}!A:A"
+        range_name = f"{worksheet_name}!B:B"
         result = service.spreadsheets().values().get(
             spreadsheetId=spreadsheet_id, range=range_name).execute()
         
